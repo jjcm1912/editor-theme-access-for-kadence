@@ -1,5 +1,5 @@
 === Editor Theme Access for Kadence ===
-Contributors: seu-utilizador-wordpressorg
+Contributors: jjcm1962
 Tags: kadence, editor, capabilities, customizer, theme options
 Requires at least: 5.8
 Tested up to: 6.6

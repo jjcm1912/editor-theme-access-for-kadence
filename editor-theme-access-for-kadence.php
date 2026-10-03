@@ -1,13 +1,13 @@
 <?php
 /**
  * Plugin Name:       Editor Theme Access for Kadence
- * Plugin URI:        https://exemplo.com/editor-theme-access-for-kadence
+ * Plugin URI:        https://github.com/jjcm1912/editor-theme-access-for-kadence
  * Description:       Dá à role "editor" acesso completo ao Customizer do tema Kadence (Header, Footer, Colors & Fonts, General, Posts/Pages Layout, etc.), que o Kadence só mostra integralmente a quem tem manage_options. A elevação só atua quando o tema ativo é mesmo o Kadence, apenas dentro de pedidos verificados (nonce) do Customizer, e nunca é escrita na base de dados.
  * Version:           2.1.0
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            José
- * Author URI:        https://exemplo.com
+ * Author URI:        https://github.com/jjcm1912
  * License:           GPL v2 or later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       editor-theme-access-for-kadence
