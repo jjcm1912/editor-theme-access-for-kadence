@@ -1,26 +1,26 @@
 <?php
 /**
- * Rotina de desinstalação.
+ * Uninstall routine.
  *
- * Este plugin nunca grava capabilities, opções ou dados na base de
- * dados — toda a concessão de acesso (incluindo a elevação temporária
- * a manage_options) é feita dinamicamente através do filtro
- * 'user_has_cap', apenas durante pedidos verificados do
- * Customizer/Kadence. Por isso, desinstalar o plugin não requer
- * qualquer limpeza: ao remover o plugin, o filtro deixa simplesmente
- * de ser executado e a role "editor" volta de imediato ao seu
- * comportamento nativo.
+ * This plugin never writes capabilities, options, or any other data
+ * to the database — every grant (including the temporary elevation to
+ * manage_options) is calculated dynamically through the 'user_has_cap'
+ * filter, only during verified Customizer/Kadence requests. Because of
+ * this, uninstalling the plugin requires no cleanup at all: once the
+ * plugin is removed, the filter simply stops running and the "editor"
+ * role immediately reverts to its native behavior.
  *
- * Este ficheiro existe apenas para cumprir as boas práticas do
- * WordPress.org (evita o aviso "no uninstall.php found") e para deixar
- * explícito, para quem revê o plugin, que não há nada a limpar.
+ * This file exists only to follow WordPress.org best practices
+ * (it avoids the "no uninstall.php found" notice) and to make it
+ * explicit, for anyone reviewing the plugin, that there is nothing to
+ * clean up.
  *
- * @package Editor_Theme_Access_For_Kadence
+ * @package ETAK_Theme_Access
  */
 
-// Se o WordPress não invocou este ficheiro via processo de desinstalação, sai.
+// Exit if WordPress did not invoke this file through the uninstall process.
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
 
-// Nada a fazer: nenhuma opção, capability ou meta é criada por este plugin.
+// Nothing to do: this plugin creates no option, capability, or meta data.

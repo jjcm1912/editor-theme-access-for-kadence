@@ -2,8 +2,8 @@
 /**
  * Plugin Name:       Editor Theme Access for Kadence
  * Plugin URI:        https://github.com/jjcm1912/editor-theme-access-for-kadence
- * Description:       Dá à role "editor" acesso completo ao Customizer do tema Kadence (Header, Footer, Colors & Fonts, General, Posts/Pages Layout, etc.), que o Kadence só mostra integralmente a quem tem manage_options. A elevação só atua quando o tema ativo é mesmo o Kadence, apenas dentro de pedidos verificados (nonce) do Customizer, e nunca é escrita na base de dados.
- * Version:           2.1.0
+ * Description:       Gives the "editor" role full access to the Kadence theme's Customizer (Header, Footer, Colors & Fonts, General, Posts/Pages Layout, etc.), which Kadence only fully displays to users with manage_options. The elevation only applies when Kadence is the active theme, only during verified (nonce-checked) Customizer requests, and is never written to the database.
+ * Version:           2.1.1
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            José
@@ -13,108 +13,102 @@
  * Text Domain:       editor-theme-access-for-kadence
  * Domain Path:       /languages
  *
- * @package Editor_Theme_Access_For_Kadence
+ * @package ETAK_Theme_Access
  */
 
-// Impede o acesso direto ao ficheiro.
+// Prevent direct access to this file.
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-// Evita redeclarações se o ficheiro for incluído mais que uma vez.
-if ( ! class_exists( 'Editor_Theme_Access_For_Kadence' ) ) {
+// Avoid redeclaration if this file is somehow included more than once.
+if ( ! class_exists( 'ETAK_Theme_Access' ) ) {
 
 	/**
-	 * Classe principal do plugin.
+	 * Main plugin class.
 	 *
-	 * O Kadence usa uma capability interna própria para decidir se
-	 * mostra os seus painéis do Customizer (Header, Footer, Colors &
-	 * Fonts, General, Posts/Pages Layout, Homepage Settings). Na
-	 * prática, essa capability só é satisfeita por manage_options — a
-	 * capability edit_theme_options sozinha não chega para ver esses
-	 * painéis (continuam a aparecer os nativos do WordPress: Site
-	 * Identity, Menus, Widgets, CSS Adicional).
+	 * The Kadence theme uses its own internal capability check to
+	 * decide whether to display its own Customizer panels (Header,
+	 * Footer, Colors & Fonts, General, Posts/Pages Layout, Homepage
+	 * Settings). In practice, that check is only satisfied by
+	 * manage_options — the edit_theme_options capability alone is not
+	 * enough to see those panels (only the native WordPress ones keep
+	 * showing: Site Identity, Menus, Widgets, Additional CSS).
 	 *
-	 * Para contornar isto sem conceder manage_options de forma ampla,
-	 * este plugin concede-a apenas:
-	 *   1) quando o tema ativo é mesmo o Kadence (ou um tema-filho) —
-	 *      noutros temas, o plugin não faz absolutamente nada;
-	 *   2) a utilizadores com a role "editor";
-	 *   3) apenas em tempo de execução, via filtro 'user_has_cap' —
-	 *      nunca persistida na role nem em qualquer opção da BD;
-	 *   4) apenas dentro de pedidos verificados como sendo mesmo do
-	 *      Customizer (preview, guardar via AJAX ou REST), com
-	 *      verificação de nonce em cada um desses caminhos — não basta
-	 *      a presença de um parâmetro de URL.
+	 * To work around this without granting manage_options broadly,
+	 * this plugin only grants it:
+	 *   1) when the active theme is actually Kadence (or a Kadence
+	 *      child theme) — on any other theme, the plugin does nothing
+	 *      at all;
+	 *   2) to users with the "editor" role;
+	 *   3) only at runtime, via the 'user_has_cap' filter — it is
+	 *      never persisted on the role or in any database option;
+	 *   4) only during requests verified as genuine Customizer
+	 *      requests (preview, saving via AJAX or REST), with a nonce
+	 *      check on every one of those paths — the mere presence of a
+	 *      URL parameter is never enough on its own.
 	 *
-	 * Fora dessas condições, o Editor não tem manage_options em lado
-	 * nenhum: continua sem acesso a Plugins, Utilizadores, ou qualquer
-	 * outra página que dependa dessa capability. O plugin pode ficar
-	 * ativo permanentemente em qualquer instalação WordPress — só tem
-	 * efeito prático nos sites onde o Kadence está mesmo a ser usado.
+	 * Outside of those conditions, the Editor has manage_options
+	 * nowhere else: they remain without access to Plugins, Users, or
+	 * any other page that depends on that capability. The plugin can
+	 * stay active permanently on any WordPress install — it only has
+	 * a practical effect on sites where Kadence is actually being
+	 * used.
 	 */
-	class Editor_Theme_Access_For_Kadence {
+	class ETAK_Theme_Access {
 
 		/**
-		 * Versão do plugin.
+		 * Plugin version.
 		 *
 		 * @var string
 		 */
-		const VERSION = '2.1.0';
+		const VERSION = '2.1.1';
 
 		/**
-		 * Evita recursão no filtro user_has_cap (o próprio filtro, ao
-		 * concluir que deve conceder a capability, não deve voltar a
-		 * disparar-se a si próprio indiretamente).
+		 * Prevents recursion inside the user_has_cap filter (once the
+		 * filter decides to grant the capability, it must not trigger
+		 * itself again indirectly).
 		 *
 		 * @var bool
 		 */
 		private static $processing = false;
 
 		/**
-		 * Regista os hooks do plugin.
+		 * Registers the plugin's hooks.
+		 *
+		 * Translations are not loaded manually: since WordPress 4.6,
+		 * plugins hosted on WordPress.org have their translations
+		 * loaded automatically, based solely on the Text Domain
+		 * header above — a manual load_plugin_textdomain() call is
+		 * redundant and discouraged.
 		 *
 		 * @return void
 		 */
 		public static function init() {
 			add_filter( 'user_has_cap', array( __CLASS__, 'grant_runtime_caps' ), 10, 4 );
-			add_action( 'plugins_loaded', array( __CLASS__, 'load_textdomain' ) );
 		}
 
 		/**
-		 * Carrega o ficheiro de tradução do plugin.
+		 * Checks whether the active theme is Kadence or a Kadence
+		 * child theme. Uses get_template() (not get_stylesheet())
+		 * because that always returns the parent theme, even when a
+		 * child theme is active — this mirrors the check Kadence
+		 * itself performs internally when registering its panels.
 		 *
-		 * @return void
-		 */
-		public static function load_textdomain() {
-			load_plugin_textdomain(
-				'editor-theme-access-for-kadence',
-				false,
-				dirname( plugin_basename( __FILE__ ) ) . '/languages'
-			);
-		}
-
-		/**
-		 * Verifica se o tema ativo é o Kadence ou um tema-filho do
-		 * Kadence. Usa get_template() (não get_stylesheet()) porque
-		 * esse devolve sempre o tema-pai, mesmo quando um tema-filho
-		 * está ativo — é essa verificação que o Kadence também faz
-		 * internamente ao registar os seus painéis.
-		 *
-		 * Sem esta verificação, a elevação aplicar-se-ia a qualquer
-		 * tema que uses no Customizer, não só ao Kadence.
+		 * Without this check, the elevation would apply to the
+		 * Customizer of any theme, not just Kadence.
 		 *
 		 * @return bool
 		 */
 		private static function is_kadence_theme_active() {
 			/**
-			 * Filtra o(s) slug(s) de tema considerados "Kadence" para
-			 * efeitos deste plugin. Por predefinição, apenas o slug
-			 * oficial 'kadence' (tema gratuito, disponível no
-			 * WordPress.org). Útil se usares uma variante com slug
-			 * diferente.
+			 * Filters the theme slug(s) considered "Kadence" for the
+			 * purposes of this plugin. Defaults to the official
+			 * 'kadence' slug (the free theme available on
+			 * WordPress.org). Useful if you use a variant with a
+			 * different slug.
 			 *
-			 * @param string[] $slugs Lista de slugs de tema aceites.
+			 * @param string[] $slugs List of accepted theme slugs.
 			 */
 			$kadence_slugs = apply_filters( 'etak_kadence_theme_slugs', array( 'kadence' ) );
 
@@ -122,10 +116,10 @@ if ( ! class_exists( 'Editor_Theme_Access_For_Kadence' ) ) {
 		}
 
 		/**
-		 * Verifica se o utilizador é um Editor elegível (e não também
-		 * Administrador, para quem isto já seria irrelevante).
+		 * Checks whether the user is an eligible Editor (and not also
+		 * an Administrator, for whom this would already be moot).
 		 *
-		 * @param WP_User|null $user Utilizador a avaliar.
+		 * @param WP_User|null $user User being evaluated.
 		 * @return bool
 		 */
 		private static function is_eligible_editor( $user ) {
@@ -145,28 +139,28 @@ if ( ! class_exists( 'Editor_Theme_Access_For_Kadence' ) ) {
 		}
 
 		/**
-		 * Deteta se o pedido HTTP atual é mesmo um pedido legítimo do
-		 * Customizer ou do Kadence — com verificação de nonce nos
-		 * caminhos que o permitem (AJAX, REST, guardar definições).
-		 * A simples presença de um parâmetro de URL nunca é suficiente
-		 * sozinha.
+		 * Detects whether the current HTTP request is genuinely a
+		 * legitimate Customizer/Kadence request — with a nonce check
+		 * on every path that allows one (AJAX, REST, saving
+		 * settings). The mere presence of a URL parameter is never
+		 * enough on its own.
 		 *
 		 * @return bool
 		 */
 		private static function is_verified_kadence_context() {
 
-			// 1. Pré-visualização nativa do Customizer.
+			// 1. Native Customizer preview.
 			if ( function_exists( 'is_customize_preview' ) && is_customize_preview() ) {
 				return true;
 			}
 
-			// 2. Carregamento do próprio ecrã do Customizer, com nonce.
+			// 2. Loading the Customizer screen itself, with a nonce.
 			if ( is_admin() && isset( $_REQUEST['wp_customize'] ) && 'on' === $_REQUEST['wp_customize'] ) {
 				$nonce = isset( $_REQUEST['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['_wpnonce'] ) ) : '';
 				return ! empty( $nonce ) && wp_verify_nonce( $nonce, 'customize-preview' );
 			}
 
-			// 3. Pedidos AJAX do Customizer/Kadence, com nonce.
+			// 3. AJAX requests from the Customizer/Kadence, with a nonce.
 			if ( function_exists( 'wp_doing_ajax' ) && wp_doing_ajax() ) {
 				$allowed_actions = apply_filters(
 					'etak_customizer_ajax_actions',
@@ -182,7 +176,7 @@ if ( ! class_exists( 'Editor_Theme_Access_For_Kadence' ) ) {
 				return ! empty( $nonce ) && wp_verify_nonce( $nonce, 'customize_save' );
 			}
 
-			// 4. Pedidos REST ligados a definições/temas, com nonce.
+			// 4. REST requests related to settings/themes, with a nonce.
 			if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
 				$route = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 
@@ -212,17 +206,17 @@ if ( ! class_exists( 'Editor_Theme_Access_For_Kadence' ) ) {
 		}
 
 		/**
-		 * Filtra as capabilities do utilizador atual, concedendo
-		 * manage_options (além de edit_theme_options e customize)
-		 * apenas quando as duas condições se verificam: o utilizador é
-		 * um Editor elegível, E o pedido atual é um pedido verificado
-		 * do Customizer/Kadence.
+		 * Filters the current user's capabilities, granting
+		 * manage_options (in addition to edit_theme_options and
+		 * customize) only when both conditions are met: the user is
+		 * an eligible Editor, AND the current request is a verified
+		 * Customizer/Kadence request.
 		 *
-		 * @param bool[]   $allcaps Capabilities já atribuídas ao utilizador.
-		 * @param string[] $caps    Capabilities primitivas requeridas.
-		 * @param array    $args    Argumentos adicionais.
-		 * @param WP_User  $user    Utilizador em avaliação.
-		 * @return bool[] Array de capabilities, possivelmente alterado.
+		 * @param bool[]   $allcaps Capabilities already granted to the user.
+		 * @param string[] $caps    Primitive capabilities required.
+		 * @param array    $args    Additional arguments.
+		 * @param WP_User  $user    User being evaluated.
+		 * @return bool[] The (possibly altered) capabilities array.
 		 */
 		public static function grant_runtime_caps( $allcaps, $caps, $args, $user ) {
 
@@ -230,12 +224,12 @@ if ( ! class_exists( 'Editor_Theme_Access_For_Kadence' ) ) {
 				return $allcaps;
 			}
 
-			// Já é administrador (ou já tem manage_options por outra via) — nada a fazer.
+			// Already an administrator (or already has manage_options some other way) — nothing to do.
 			if ( ! empty( $allcaps['manage_options'] ) ) {
 				return $allcaps;
 			}
 
-			// Só atua se o tema ativo for mesmo o Kadence (ou um tema-filho).
+			// Only act if the active theme is actually Kadence (or a child theme).
 			if ( ! self::is_kadence_theme_active() ) {
 				return $allcaps;
 			}
@@ -245,17 +239,18 @@ if ( ! class_exists( 'Editor_Theme_Access_For_Kadence' ) ) {
 			}
 
 			/**
-			 * Filtra se este Editor em concreto deve receber a elevação.
-			 * Por predefinição aplica-se a todos os Editores elegíveis.
-			 * Um mu-plugin ou functions.php pode restringir a IDs
-			 * específicos sem alterar este plugin:
+			 * Filters whether this specific Editor should receive the
+			 * elevation. Defaults to applying to all eligible
+			 * Editors. A must-use plugin or the theme's functions.php
+			 * can restrict this to specific IDs without modifying
+			 * this plugin:
 			 *
 			 *   add_filter( 'etak_grant_theme_access', function ( $grant, $user ) {
 			 *       return in_array( $user->ID, array( 5, 12 ), true );
 			 *   }, 10, 2 );
 			 *
-			 * @param bool    $grant Se a elevação deve ser concedida a este utilizador.
-			 * @param WP_User $user  Utilizador em avaliação.
+			 * @param bool    $grant Whether the elevation should be granted to this user.
+			 * @param WP_User $user  User being evaluated.
 			 */
 			if ( ! apply_filters( 'etak_grant_theme_access', true, $user ) ) {
 				return $allcaps;
@@ -275,5 +270,5 @@ if ( ! class_exists( 'Editor_Theme_Access_For_Kadence' ) ) {
 		}
 	}
 
-	Editor_Theme_Access_For_Kadence::init();
+	ETAK_Theme_Access::init();
 }
