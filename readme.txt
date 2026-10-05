@@ -1,10 +1,10 @@
-=== Editor Theme Access for Kadence ===
+=== JJCM Editor Theme Access for Kadence ===
 Contributors: jjcm1962
 Tags: kadence, editor, capabilities, customizer, theme options
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.1.1
+Stable tag: 2.1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -139,6 +139,11 @@ with Kadence WP.
 No screenshots — this plugin has no user interface.
 
 == Changelog ==
+
+= 2.1.2 =
+* Renamed to "JJCM Editor Theme Access for Kadence" (slug:
+  jjcm-editor-theme-access-for-kadence), per WordPress.org plugin
+  review naming guidelines.
 
 = 2.1.1 =
 * Renamed the main class to ETAK_Theme_Access to use a short, unique

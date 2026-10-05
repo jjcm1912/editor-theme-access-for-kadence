@@ -1,16 +1,16 @@
 <?php
 /**
- * Plugin Name:       Editor Theme Access for Kadence
+ * Plugin Name:       JJCM Editor Theme Access for Kadence
  * Plugin URI:        https://github.com/jjcm1912/editor-theme-access-for-kadence
  * Description:       Gives the "editor" role full access to the Kadence theme's Customizer (Header, Footer, Colors & Fonts, General, Posts/Pages Layout, etc.), which Kadence only fully displays to users with manage_options. The elevation only applies when Kadence is the active theme, only during verified (nonce-checked) Customizer requests, and is never written to the database.
- * Version:           2.1.1
+ * Version:           2.1.2
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            José
  * Author URI:        https://github.com/jjcm1912
  * License:           GPL v2 or later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       editor-theme-access-for-kadence
+ * Text Domain:       jjcm-editor-theme-access-for-kadence
  * Domain Path:       /languages
  *
  * @package ETAK_Theme_Access
@@ -62,7 +62,7 @@ if ( ! class_exists( 'ETAK_Theme_Access' ) ) {
 		 *
 		 * @var string
 		 */
-		const VERSION = '2.1.1';
+		const VERSION = '2.1.2';
 
 		/**
 		 * Prevents recursion inside the user_has_cap filter (once the
